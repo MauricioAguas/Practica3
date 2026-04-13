@@ -5,7 +5,9 @@ CONFIG -= qt
 
 SOURCES += \
         encriptacion.cpp \
-        main.cpp
+        main.cpp \
+        rle.cpp
 
 HEADERS += \
-    encriptacion.h
+    encriptacion.h \
+    rle.h
