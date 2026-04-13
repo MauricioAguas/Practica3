@@ -4,6 +4,6 @@
 
 
 std::string comprimirRLE(std::string texto);
-
+std::string descomprimirRLE(std::string texto);
 
 #endif
