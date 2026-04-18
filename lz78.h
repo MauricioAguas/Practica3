@@ -7,5 +7,13 @@ struct EntradaLZ78 {
     char caracter; // El carácter que se añade a esa frase
 };
 
+// Estructura para agrupar el diccionario dinámico y su tamaño actual
+struct ResultadoLZ78 {
+    EntradaLZ78* diccionario;
+    int tamano;
+};
+
+// Prototipos de funciones
+ResultadoLZ78 comprimirLZ78(const char* texto, int longitud);
 
 #endif
