@@ -79,7 +79,14 @@ void programa(string contenido){
             break;
         case 4:
             cout<<"Descomprimiendo LZ78..."<<endl;
-            descomprimirLZ78(miResultadoLZ78);
+            {
+                int longitud = 0;
+                char* recuperado = descomprimirLZ78(miResultadoLZ78, longitud);
+                if (recuperado) {
+                    cout << "Texto recuperado: " << recuperado << endl;
+                    delete[] recuperado; // libera memoria dinámica
+                }
+            }
             break;
         case 5: { // Nueva opción: Encriptar/Desencriptar
             int n;

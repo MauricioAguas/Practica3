@@ -10,7 +10,7 @@ string comprimirRLE(string texto) {
 
     for (int i = 0; i < n; i++) {
         // SALTO DE SEGURIDAD: Si el caracter es un salto de línea o retorno, lo ignoramos
-        if (texto[i] == '\n' || texto[i] == '\r') continue;
+        //if (texto[i] == '\n' || texto[i] == '\r') continue;
 
         int conteo = 1;
         while (i < n - 1 && texto[i] == texto[i + 1]) {

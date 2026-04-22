@@ -15,6 +15,7 @@ struct ResultadoLZ78 {
 
 // Prototipos de funciones
 ResultadoLZ78 comprimirLZ78(const char* texto, int longitud);
-void descomprimirLZ78(ResultadoLZ78 res);
+char* descomprimirLZ78(ResultadoLZ78 res,int &longitudSalida);
 void liberarMemoriaLZ78(ResultadoLZ78 &res);
+
 #endif

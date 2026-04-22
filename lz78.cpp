@@ -64,37 +64,56 @@ ResultadoLZ78 comprimirLZ78(const char* texto, int longitud) {
     cout << endl;
     return {diccionario, tamanoActual};
 }
-
-void descomprimirLZ78(ResultadoLZ78 res) {
+//Retorna char* con memoria dinámica, sin usar string
+char* descomprimirLZ78(ResultadoLZ78 res, int &longitudSalida) {
     if (!res.diccionario || res.tamano == 0) {
-        cout << "No hay datos para descomprimir." << endl;
-        return;
+        longitudSalida = 0;
+        return nullptr;
     }
 
-    cout << "Texto Original Recuperado: ";
+    // Primero calculamos cuántos caracteres va a tener el resultado
+    int totalChars = 0;
     for (int i = 0; i < res.tamano; i++) {
-        char temporal[256]; // Buffer para reconstruir la frase (LZ78 reconstruye al revés)
-        int tope = 0;
-
         int p = i;
-        temporal[tope++] = res.diccionario[p].caracter;
+        if (res.diccionario[p].caracter != '\0') totalChars++;
         int sig = res.diccionario[p].prefijo;
+        while (sig != 0) {
+            p = sig - 1;
+            totalChars++;
+            sig = res.diccionario[p].prefijo;
+        }
+    }
 
-        // Seguir la cadena de prefijos hasta llegar al inicio (0)
+    // Reservar memoria dinámica para el resultado
+    char* resultado = new (nothrow) char[totalChars + 1];
+    if (!resultado) throw runtime_error("Error: No hay memoria para descomprimir.");
+
+    int pos = 0;
+    char temporal[256];
+
+    for (int i = 0; i < res.tamano; i++) {
+        int tope = 0;
+        int p = i;
+
+        if (res.diccionario[p].caracter != '\0')
+            temporal[tope++] = res.diccionario[p].caracter;
+
+        int sig = res.diccionario[p].prefijo;
         while (sig != 0) {
             p = sig - 1;
             temporal[tope++] = res.diccionario[p].caracter;
             sig = res.diccionario[p].prefijo;
         }
 
-        // Imprimir en reversa para obtener el orden correcto
         while (tope > 0) {
-            cout << temporal[--tope];
+            resultado[pos++] = temporal[--tope];
         }
     }
-    cout << endl;
-}
 
+    resultado[pos] = '\0'; // null-terminator
+    longitudSalida = pos;
+    return resultado;
+}
 void liberarMemoriaLZ78(ResultadoLZ78 &res) {
     if (res.diccionario) {
         delete[] res.diccionario;
