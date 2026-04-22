@@ -1,66 +1,139 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "rle.h"
 #include "lz78.h"
 #include "encriptacion.h"
 using namespace std;
 
-int main() {
-    // Prueba basica de compresion y descompresion RLE
-    string texto = "AAABBBCC";
+ResultadoLZ78 miResultadoLZ78 = {nullptr, 0};
 
-    cout << "Texto original   : " << texto << endl;
+void programa(string contenido);
 
-    string comprimido = comprimirRLE(texto);
-    cout << "Texto comprimido : " << comprimido << endl;
+int main()
+{
+    //LEER ARCHIVO
+    fstream file("D:/Mis documentos/U/2026-1/Info2/lab3/prueba/codigos.txt"); //cambiar direccion
 
-    string restaurado = descomprimirRLE(comprimido);
-    cout << "Texto restaurado : " << restaurado << endl;
-
-    if (texto == restaurado) {
-        cout << "[OK] La descompresion RLE es correcta." << endl;
-    } else {
-        cout << "[ERROR] La descompresion no coincide con el original." << endl;
+    if(!file.is_open()){
+        cout<<"Error al ejecutar el archivo";
+        return 1;
     }
 
-    // --- Prueba LZ78 completa ---
-    string textoLZ = "ABAABABA";
-    ResultadoLZ78 res = comprimirLZ78(textoLZ.c_str(), (int)textoLZ.size());
+    string texto;
+    string contenido;
 
-    cout << "LZ78 original  : " << textoLZ << endl;
-    cout << "Entradas en diccionario: " << res.tamano << endl;
-    descomprimirLZ78(res);
-    liberarMemoriaLZ78(res);
 
-    // --- Prueba Encriptacion byte a byte ---
-    int n = 3;
-    unsigned char K = 42;
-    string textoEnc = "Hola";
+    while(getline(file, texto))
+        contenido += texto+"\n";
+    file.close();
 
-    cout << "Texto original   : " << textoEnc << endl;
-    cout << "Bytes encriptados: ";
+    cout<<"Original:"<<contenido<<endl;
 
-    // Encriptar cada byte y guardarlos
-    int tam = (int)textoEnc.size();
-    unsigned char* encriptado = new unsigned char[tam];
-    for (int i = 0; i < tam; i++) {
-        encriptado[i] = encriptarByte((unsigned char)textoEnc[i], n, K);
-        cout << hex << (int)encriptado[i] << " ";
-    }
-    cout << dec << endl;
-
-    // Desencriptar y recuperar texto
-    string recuperado = "";
-    for (int i = 0; i < tam; i++) {
-        recuperado += (char)desencriptarByte(encriptado[i], n, K);
-    }
-    cout << "Texto recuperado : " << recuperado << endl;
-
-    if (textoEnc == recuperado)
-        cout << "[OK] Encriptacion correcta." << endl;
-    else
-        cout << "[ERROR] No coincide." << endl;
-
-    delete[] encriptado;
+    //INICIAR MENU
+    programa(contenido);
+    liberarMemoriaLZ78(miResultadoLZ78);
     return 0;
+}
+
+void programa(string contenido){
+    int opcion=0;
+    do{
+        //MENU
+        cout<<"\n=============MENU==========="<<endl;
+        cout<<"Elige una opcion."<<endl;
+        cout<<"1. Comprimir RLE"<<endl;
+        cout<<"2. Comprimir LZ78"<<endl;
+        cout<<"3. Descomprimir RLE"<<endl;
+        cout<<"4. Descomprimir LZ78"<<endl;
+        cout<<"5.Encriptacion y descriptacion"<<endl;
+        cout<<"6. Salir"<<endl;
+        cout<<"Opcion: ";
+
+
+        cin>>opcion;
+        switch (opcion) {
+        case 1:
+            cout << "Comprimiendo en RLE..." << endl;
+            // IMPORTANTE: Guardar el resultado en la variable
+            contenido = comprimirRLE(contenido);
+            cout << "Resultado guardado: " << contenido << endl;
+            break;
+        case 2:
+            cout << "Comprimiendo LZ78..." << endl;
+            try {
+                liberarMemoriaLZ78(miResultadoLZ78);
+            } catch (const exception& e) {
+                cout << e.what() << endl;
+            }
+            miResultadoLZ78 = comprimirLZ78(contenido.c_str(), contenido.length());
+            break;
+        case 3:
+            cout<<"Descomprimiendo RLE..."<<endl;
+            try {
+                string descompreso = descomprimirRLE(contenido);
+                cout << "Texto recuperado: " << descompreso << endl;
+            } catch (const exception& e) {
+                cout << "ERROR: " << e.what() << endl;
+            }
+            break;
+        case 4:
+            cout<<"Descomprimiendo LZ78..."<<endl;
+            descomprimirLZ78(miResultadoLZ78);
+            break;
+        case 5: { // Nueva opción: Encriptar/Desencriptar
+            int n;
+            char k_char;
+            cout << "--- Configuracion de Encriptacion ---" << endl;
+            cout << "Ingrese valor de rotacion n (1-7): ";
+            cin >> n;
+
+            // Validación con manejo de excepciones [cite: 168]
+            if (n <= 0 || n >= 8) {
+                cout << "Error: n debe estar entre 1 y 7." << endl;
+                break;
+            }
+
+            cout << "Ingrese clave K (un caracter): ";
+            cin >> k_char;
+            unsigned char K = (unsigned char)k_char;
+
+            cout << "1. Encriptar contenido actual" << endl;
+            cout << "2. Desencriptar contenido actual" << endl;
+            int subOpcion;
+            cin >> subOpcion;
+
+            string nuevoContenido = "";
+            if (subOpcion == 1) {
+                for (char c : contenido)
+                    nuevoContenido += (char)encriptarByte((unsigned char)c, n, K);
+                cout << "Contenido encriptado." << endl;
+            } else {
+                for (char c : contenido)
+                    nuevoContenido += (char)desencriptarByte((unsigned char)c, n, K);
+                cout << "Contenido desencriptado." << endl;
+            }
+
+            contenido = nuevoContenido;
+            cout << "Vista previa: " << contenido << endl;
+            break;
+        }
+        case 6:
+            cout << "Guardando verificacion final..." << endl;
+            {
+                ofstream archivoSalida("D:/Mis documentos/U/2026-1/Info2/lab3/prueba/verificacion.txt");
+                if (archivoSalida.is_open()) {
+                    archivoSalida << contenido;
+                    archivoSalida.close();
+                    cout << "Archivo 'verificacion.txt' generado exitosamente." << endl;
+                }
+            }
+            cout << "Saliendo..." << endl;
+            break;
+
+        default:
+            cout << "Opcion invalida" << endl;
+            break;
+        }
+    } while (opcion != 6);
 }

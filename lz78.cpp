@@ -64,3 +64,41 @@ ResultadoLZ78 comprimirLZ78(const char* texto, int longitud) {
     cout << endl;
     return {diccionario, tamanoActual};
 }
+
+void descomprimirLZ78(ResultadoLZ78 res) {
+    if (!res.diccionario || res.tamano == 0) {
+        cout << "No hay datos para descomprimir." << endl;
+        return;
+    }
+
+    cout << "Texto Original Recuperado: ";
+    for (int i = 0; i < res.tamano; i++) {
+        char temporal[256]; // Buffer para reconstruir la frase (LZ78 reconstruye al revés)
+        int tope = 0;
+
+        int p = i;
+        temporal[tope++] = res.diccionario[p].caracter;
+        int sig = res.diccionario[p].prefijo;
+
+        // Seguir la cadena de prefijos hasta llegar al inicio (0)
+        while (sig != 0) {
+            p = sig - 1;
+            temporal[tope++] = res.diccionario[p].caracter;
+            sig = res.diccionario[p].prefijo;
+        }
+
+        // Imprimir en reversa para obtener el orden correcto
+        while (tope > 0) {
+            cout << temporal[--tope];
+        }
+    }
+    cout << endl;
+}
+
+void liberarMemoriaLZ78(ResultadoLZ78 &res) {
+    if (res.diccionario) {
+        delete[] res.diccionario;
+        res.diccionario = nullptr;
+        res.tamano = 0;
+    }
+}
