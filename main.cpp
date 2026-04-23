@@ -8,35 +8,38 @@ using namespace std;
 
 ResultadoLZ78 miResultadoLZ78 = {nullptr, 0};
 
-void programa(string contenido);
+void programa(string contenido, string rutaArchivo);
 
 int main()
 {
     //LEER ARCHIVO
-    fstream file("D:/Mis documentos/U/2026-1/Info2/lab3/prueba/codigos.txt"); //cambiar direccion
-
-    if(!file.is_open()){
-        cout<<"Error al ejecutar el archivo";
-        return 1;
-    }
-
+    string rutaArchivo="D:/Mis documentos/U/2026-1/Info2/lab3/prueba/codigos.txt"; //cambiar direccion
     string texto;
     string contenido;
 
+    try {
+    //   fstream file(rutaArchivo);
+        fstream file(rutaArchivo, ios::in | ios::binary);
+        if (!file.is_open())
+            throw runtime_error("No se pudo abrir el archivo: " + rutaArchivo);
 
-    while(getline(file, texto))
-        contenido += texto+"\n";
-    file.close();
+        while (getline(file, texto))
+            contenido += texto + "\n";
+        file.close();
+    } catch (const exception& e) {
+        cout << "ERROR: " << e.what() << endl;
+        return 1;
+    }
 
-    cout<<"Original:"<<contenido<<endl;
+    cout << "Original: " << contenido << endl;
 
     //INICIAR MENU
-    programa(contenido);
+    programa(contenido,rutaArchivo);
     liberarMemoriaLZ78(miResultadoLZ78);
     return 0;
 }
 
-void programa(string contenido){
+void programa(string contenido, string rutaArchivo){
     int opcion=0;
     do{
         //MENU
@@ -47,7 +50,8 @@ void programa(string contenido){
         cout<<"3. Descomprimir RLE"<<endl;
         cout<<"4. Descomprimir LZ78"<<endl;
         cout<<"5.Encriptacion y descriptacion"<<endl;
-        cout<<"6. Salir"<<endl;
+        cout<<"6. Allin1"<<endl;
+        cout<<"7. Salir"<<endl;
         cout<<"Opcion: ";
 
 
@@ -88,6 +92,7 @@ void programa(string contenido){
                 }
             }
             break;
+
         case 5: { // Nueva opción: Encriptar/Desencriptar
             int n;
             char k_char;
@@ -95,7 +100,7 @@ void programa(string contenido){
             cout << "Ingrese valor de rotacion n (1-7): ";
             cin >> n;
 
-            // Validación con manejo de excepciones [cite: 168]
+            // Validación con manejo de excepciones
             if (n <= 0 || n >= 8) {
                 cout << "Error: n debe estar entre 1 y 7." << endl;
                 break;
@@ -103,11 +108,12 @@ void programa(string contenido){
 
             cout << "Ingrese clave K (un caracter): ";
             cin >> k_char;
+            cin.ignore();
             unsigned char K = (unsigned char)k_char;
 
+            int subOpcion=0;
             cout << "1. Encriptar contenido actual" << endl;
             cout << "2. Desencriptar contenido actual" << endl;
-            int subOpcion;
             cin >> subOpcion;
 
             string nuevoContenido = "";
@@ -125,7 +131,131 @@ void programa(string contenido){
             cout << "Vista previa: " << contenido << endl;
             break;
         }
-        case 6:
+        case 6: { // NUEVO — Flujo integrado completo (sección 5.4)
+            int metodo, n;
+            char k_char;
+
+            cout << "\n--- Flujo Integrado Completo ---" << endl;
+
+            // 1. Elegir método de compresión
+            cout << "Metodo de compresion (1=RLE, 2=LZ78): ";
+            cin >> metodo;
+
+            // 2. Parámetros de encriptación
+            cout << "Ingrese valor de rotacion n (1-7): ";
+            cin >> n;
+            if (n <= 0 || n >= 8) {
+                cout << "Error: n debe estar entre 1 y 7." << endl;
+                break;
+            }
+            cout << "Ingrese clave K (un caracter): ";
+            cin >> k_char;
+            unsigned char K = (unsigned char)k_char;
+
+            // Releer el texto original desde rutaArchivo para tener referencia limpia
+            string original = "";
+            try {
+                ifstream fileOrig(rutaArchivo);
+                if (!fileOrig.is_open())
+                    throw runtime_error("No se pudo releer el archivo: " + rutaArchivo);
+                string linea;
+                while (getline(fileOrig, linea))
+                    original += linea + "\n";
+                fileOrig.close();
+            } catch (const exception& e) {
+                cout << "ERROR: " << e.what() << endl;
+                break;
+            }
+
+            // PASO 1: Comprimir
+            string comprimidoRLE = "";
+            ResultadoLZ78 comprimidoLZ78 = {nullptr, 0};
+
+            if (metodo == 1) {
+                cout << "\n[1/4] Comprimiendo con RLE..." << endl;
+                comprimidoRLE = comprimirRLE(original);
+                cout << "Comprimido: " << comprimidoRLE << endl;
+            } else {
+                cout << "\n[1/4] Comprimiendo con LZ78..." << endl;
+                comprimidoLZ78 = comprimirLZ78(original.c_str(), original.length());
+            }
+
+            // PASO 2: Encriptar byte a byte
+            cout << "[2/4] Encriptando..." << endl;
+            string encriptado = "";
+            if (metodo == 1) {
+                for (char c : comprimidoRLE)
+                    encriptado += (char)encriptarByte((unsigned char)c, n, K);
+            } else {
+                // Encriptar el carácter de cada entrada del diccionario LZ78
+                for (int i = 0; i < comprimidoLZ78.tamano; i++)
+                    comprimidoLZ78.diccionario[i].caracter =
+                        (char)encriptarByte((unsigned char)comprimidoLZ78.diccionario[i].caracter, n, K);
+            }
+            cout << "Encriptado correctamente." << endl;
+
+            // PASO 3: Desencriptar
+            cout << "[3/4] Desencriptando..." << endl;
+            if (metodo == 1) {
+                string desencriptado = "";
+                for (char c : encriptado)
+                    desencriptado += (char)desencriptarByte((unsigned char)c, n, K);
+                encriptado = desencriptado;
+            } else {
+                // Desencriptar el carácter de cada entrada del diccionario LZ78
+                for (int i = 0; i < comprimidoLZ78.tamano; i++)
+                    comprimidoLZ78.diccionario[i].caracter =
+                        (char)desencriptarByte((unsigned char)comprimidoLZ78.diccionario[i].caracter, n, K);
+            }
+
+            // PASO 4: Descomprimir y recuperar texto
+            cout << "[4/4] Descomprimiendo..." << endl;
+            string recuperado = "";
+            if (metodo == 1) {
+                try {
+                    recuperado = descomprimirRLE(encriptado);
+                } catch (const exception& e) {
+                    cout << "ERROR al descomprimir RLE: " << e.what() << endl;
+                    break;
+                }
+            } else {
+                int longSalida = 0;
+                char* recChar = descomprimirLZ78(comprimidoLZ78, longSalida);
+                if (recChar) {
+                    // Construir string solo para comparar e imprimir — único uso permitido
+                    for (int i = 0; i < longSalida; i++)
+                        recuperado += recChar[i];
+                    delete[] recChar;
+                }
+                liberarMemoriaLZ78(comprimidoLZ78);
+            }
+
+            // PASO 5: Escribir resultado en archivo de salida
+            try {
+                ofstream archivoSalida("verificacion.txt");
+                if (!archivoSalida.is_open())
+                    throw runtime_error("No se pudo crear el archivo verificacion.txt");
+                archivoSalida << recuperado;
+                archivoSalida.close();
+                cout << "Archivo 'verificacion.txt' generado." << endl;
+            } catch (const exception& e) {
+                cout << "ERROR: " << e.what() << endl;
+                break;
+            }
+
+            // PASO 6: Verificar que el texto recuperado == original
+            cout << "\n--- Verificacion ---" << endl;
+            if (recuperado == original) {
+                cout << "EXITO: El texto recuperado es identico al original." << endl;
+            } else {
+                cout << "ERROR: El texto recuperado NO coincide con el original." << endl;
+                cout << "Longitud original:   " << original.length()   << " chars" << endl;
+                cout << "Longitud recuperado: " << recuperado.length() << " chars" << endl;
+            }
+            break;
+        }
+
+        case 7:
             cout << "Guardando verificacion final..." << endl;
             {
                 ofstream archivoSalida("D:/Mis documentos/U/2026-1/Info2/lab3/prueba/verificacion.txt");
@@ -142,5 +272,5 @@ void programa(string contenido){
             cout << "Opcion invalida" << endl;
             break;
         }
-    } while (opcion != 6);
+    } while (opcion != 7);
 }

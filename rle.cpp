@@ -37,7 +37,7 @@ string descomprimirRLE(string texto) {
 
         // Validación: Si no hay un número antes del carácter, el formato es incorrecto
         if (numStr.empty()) {
-            throw runtime_error("Error en RLE: Formato inválido (se esperaba un número).");
+            throw runtime_error("Error en RLE: Formato invalido (se esperaba un numero).");
         }
 
         // 2. El siguiente carácter es el que debemos repetir

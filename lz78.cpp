@@ -32,7 +32,7 @@ ResultadoLZ78 comprimirLZ78(const char* texto, int longitud) {
 
     for (int i = 0; i < longitud; i++) {
         char c = texto[i];
-        if (c == '\n' || c == '\r') continue; // Ignorar saltos de línea del archivo
+        //if (c == '\n' || c == '\r') continue; // Ignorar saltos de línea del archivo
 
         int encontrado = -1;
         // Buscar si el par (prefijo, caracter) ya existe en nuestro diccionario
